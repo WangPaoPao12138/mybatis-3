@@ -99,10 +99,12 @@ public class TypeParameterResolverTest {
     Method method = clazz.getMethod("simpleSelectWildcard");
     Type result = TypeParameterResolver.resolveReturnType(method, clazz);
     assertTrue(result instanceof ParameterizedType);
+    //参数化类型
     ParameterizedType paramType = (ParameterizedType) result;
     assertEquals(List.class, paramType.getRawType());
     assertEquals(1, paramType.getActualTypeArguments().length);
     assertTrue(paramType.getActualTypeArguments()[0] instanceof WildcardType);
+    //通配符
     WildcardType wildcard = (WildcardType) paramType.getActualTypeArguments()[0];
     assertEquals(String.class, wildcard.getUpperBounds()[0]);
   }
@@ -146,6 +148,7 @@ public class TypeParameterResolverTest {
   public void testReturn_Lv1Class() throws Exception {
     Class<?> clazz = Level1Mapper.class;
     Method method = clazz.getMethod("select", Object.class);
+    //Object 解析出来是String类型
     Type result = TypeParameterResolver.resolveReturnType(method, clazz);
     assertEquals(String.class, result);
   }
@@ -235,9 +238,12 @@ public class TypeParameterResolverTest {
     Type result = TypeParameterResolver.resolveReturnType(method, clazz);
     assertTrue(result instanceof GenericArrayType);
     GenericArrayType genericArrayType = (GenericArrayType) result;
+    // List<N>[]
     assertTrue(genericArrayType.getGenericComponentType() instanceof ParameterizedType);
     ParameterizedType paramType = (ParameterizedType) genericArrayType.getGenericComponentType();
+    // List
     assertEquals(List.class, paramType.getRawType());
+    // N
     assertEquals(String.class, paramType.getActualTypeArguments()[0]);
   }
 

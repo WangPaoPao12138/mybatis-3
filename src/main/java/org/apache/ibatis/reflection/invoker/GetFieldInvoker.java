@@ -23,18 +23,30 @@ import org.apache.ibatis.reflection.Reflector;
  * @author Clinton Begin
  */
 public class GetFieldInvoker implements Invoker {
+  /**
+   * Field对象
+   */
   private final Field field;
 
   public GetFieldInvoker(Field field) {
     this.field = field;
   }
 
+  /**
+   * 获取实例指定filed的值
+   *
+   * @param target 目标
+   * @param args 参数
+   * @return
+   * @throws IllegalAccessException
+   */
   @Override
   public Object invoke(Object target, Object[] args) throws IllegalAccessException {
     try {
       return field.get(target);
     } catch (IllegalAccessException e) {
       if (Reflector.canControlMemberAccessible()) {
+        //如果异常则设置Security跳过检查
         field.setAccessible(true);
         return field.get(target);
       } else {
@@ -43,6 +55,10 @@ public class GetFieldInvoker implements Invoker {
     }
   }
 
+  /**
+   * 返回属性类型
+   * @return
+   */
   @Override
   public Class<?> getType() {
     return field.getType();

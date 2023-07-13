@@ -217,5 +217,6 @@ public class ReflectorTest {
     ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
     Reflector reflector = reflectorFactory.findForClass(Bean.class);
     assertTrue((Boolean)reflector.getGetInvoker("bool").invoke(new Bean(), new Byte[0]));
+//    assertNotNull(reflector.getGetInvoker("this$0").invoke(new Bean(), new Byte[0]));
   }
 }

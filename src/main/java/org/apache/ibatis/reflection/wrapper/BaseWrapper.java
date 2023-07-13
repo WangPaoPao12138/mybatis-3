@@ -27,13 +27,25 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
  */
 public abstract class BaseWrapper implements ObjectWrapper {
 
+  /**
+   * 无参方法入参
+   */
   protected static final Object[] NO_ARGUMENTS = new Object[0];
+  /**
+   * MetaObject对象
+   */
   protected final MetaObject metaObject;
 
   protected BaseWrapper(MetaObject metaObject) {
     this.metaObject = metaObject;
   }
 
+  /**
+   *
+   * @param prop PropertyTokenizer 分词对象
+   * @param object 指定的Object对象
+   * @return
+   */
   protected Object resolveCollection(PropertyTokenizer prop, Object object) {
     if ("".equals(prop.getName())) {
       return object;
@@ -42,8 +54,15 @@ public abstract class BaseWrapper implements ObjectWrapper {
     }
   }
 
+  /**
+   * 获取集合中指定位置的值 map ||   list / Array
+   * @param prop PropertyTokenizer 分词对象
+   * @param collection 集合
+   * @return 值
+   */
   protected Object getCollectionValue(PropertyTokenizer prop, Object collection) {
     if (collection instanceof Map) {
+      //map直接通过index（key）获取值
       return ((Map) collection).get(prop.getIndex());
     } else {
       int i = Integer.parseInt(prop.getIndex());
@@ -73,8 +92,15 @@ public abstract class BaseWrapper implements ObjectWrapper {
     }
   }
 
+  /**
+   * 设置集合中指定位置的值
+   * @param prop  PropertyTokenizer 对象
+   * @param collection 集合
+   * @param value 值
+   */
   protected void setCollectionValue(PropertyTokenizer prop, Object collection, Object value) {
     if (collection instanceof Map) {
+      //map直接通过index（key）获取值
       ((Map) collection).put(prop.getIndex(), value);
     } else {
       int i = Integer.parseInt(prop.getIndex());

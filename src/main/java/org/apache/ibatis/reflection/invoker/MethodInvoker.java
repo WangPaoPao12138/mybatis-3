@@ -25,19 +25,35 @@ import org.apache.ibatis.reflection.Reflector;
  */
 public class MethodInvoker implements Invoker {
 
+  /**
+   * 参数类型 入参第一个参数 / 返参
+   */
   private final Class<?> type;
+  /**
+   * 指定方法
+   */
   private final Method method;
 
   public MethodInvoker(Method method) {
     this.method = method;
-
+    //如果是入参只有一个设置为第一个入参类型
     if (method.getParameterTypes().length == 1) {
       type = method.getParameterTypes()[0];
+    //否则设置为返回类型
     } else {
       type = method.getReturnType();
     }
   }
 
+  /**
+   *  执行指定方法 并且返回执行结果
+   *
+   * @param target 目标
+   * @param args 参数
+   * @return
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   */
   @Override
   public Object invoke(Object target, Object[] args) throws IllegalAccessException, InvocationTargetException {
     try {
@@ -52,6 +68,10 @@ public class MethodInvoker implements Invoker {
     }
   }
 
+  /**
+   * 获得类型  入参第一个参数 / 返参
+   * @return
+   */
   @Override
   public Class<?> getType() {
     return type;

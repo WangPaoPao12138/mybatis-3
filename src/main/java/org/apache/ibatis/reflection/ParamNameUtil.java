@@ -23,18 +23,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParamNameUtil {
+  /**
+   * 获取普通方法惨呼列表
+   * @param method 普通方法
+   * @return 参数名集合
+   */
   public static List<String> getParamNames(Method method) {
     return getParameterNames(method);
   }
 
+  /**
+   * 获得构造方法参数列表
+   * @param constructor 构造方法
+   * @return 参数名集合
+   */
   public static List<String> getParamNames(Constructor<?> constructor) {
     return getParameterNames(constructor);
   }
 
   private static List<String> getParameterNames(Executable executable) {
     final List<String> names = new ArrayList<>();
+    //获得可执行对象 的参数 Parameter 数组
     final Parameter[] params = executable.getParameters();
     for (Parameter param : params) {
+      //获取参数名 添到names中
       names.add(param.getName());
     }
     return names;
