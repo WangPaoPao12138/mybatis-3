@@ -26,6 +26,12 @@ public class ExceptionFactory {
     // Prevent Instantiation
   }
 
+  /**
+   * 包装异常成为 PersistenceException
+   * @param message 消息
+   * @param e 异常
+   * @return PersistenceException
+   */
   public static RuntimeException wrapException(String message, Exception e) {
     return new PersistenceException(ErrorContext.instance().message(message).cause(e).toString(), e);
   }
