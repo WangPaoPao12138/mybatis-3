@@ -27,8 +27,14 @@ import org.apache.ibatis.cache.CacheException;
  */
 public class PerpetualCache implements Cache {
 
+  /**
+   * 唯一标识
+   */
   private final String id;
 
+  /**
+   * 缓存容器
+   */
   private Map<Object, Object> cache = new HashMap<>();
 
   public PerpetualCache(String id) {
