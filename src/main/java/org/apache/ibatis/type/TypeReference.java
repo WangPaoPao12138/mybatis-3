@@ -27,15 +27,31 @@ import java.lang.reflect.Type;
  */
 public abstract class TypeReference<T> {
 
+  /**
+   * 泛型
+   */
   private final Type rawType;
 
   protected TypeReference() {
     rawType = getSuperclassTypeParameter(getClass());
   }
 
+  public static void main(String[] args) {
+    //BaseTypeHandler<Integer>
+    IntegerTypeHandler objectTypeReference = new IntegerTypeHandler();
+    System.out.println(objectTypeReference.getSuperclassTypeParameter(IntegerTypeHandler.class));//class java.lang.Integer
+  }
+
+  /**
+   * 获取父类泛型
+   * @param clazz
+   * @return
+   */
   Type getSuperclassTypeParameter(Class<?> clazz) {
+    // 【1】从父类中获取 <T>
     Type genericSuperclass = clazz.getGenericSuperclass();
     if (genericSuperclass instanceof Class) {
+      // 能满足这个条件的，例如 GenericTypeSupportedInHierarchiesTestCase.CustomStringTypeHandler 这个类
       // try to climb up the hierarchy until meet something useful
       if (TypeReference.class != genericSuperclass) {
         return getSuperclassTypeParameter(clazz.getSuperclass());
@@ -45,8 +61,10 @@ public abstract class TypeReference<T> {
         + "Remove the extension or add a type parameter to it.");
     }
 
+    // 【2】获取 <T>
     Type rawType = ((ParameterizedType) genericSuperclass).getActualTypeArguments()[0];
     // TODO remove this when Reflector is fixed to return Types
+    // 必须是泛型，才获取 <T>
     if (rawType instanceof ParameterizedType) {
       rawType = ((ParameterizedType) rawType).getRawType();
     }
