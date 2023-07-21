@@ -25,7 +25,13 @@ import java.net.URL;
  */
 public class ClassLoaderWrapper {
 
+  /**
+   * 默认 ClassLoader 对象
+   */
   ClassLoader defaultClassLoader;
+  /**
+   * 系统 ClassLoader 对象
+   */
   ClassLoader systemClassLoader;
 
   ClassLoaderWrapper() {
@@ -109,17 +115,21 @@ public class ClassLoaderWrapper {
    * @return the resource or null
    */
   InputStream getResourceAsStream(String resource, ClassLoader[] classLoader) {
+    // 遍历 ClassLoader 数组
     for (ClassLoader cl : classLoader) {
       if (null != cl) {
 
+        // 获得 InputStream ，不带 /
         // try to find the resource as passed
         InputStream returnValue = cl.getResourceAsStream(resource);
 
+        // 获得 InputStream ，带 /
         // now, some class loaders want this leading "/", so we'll add it and try again if we didn't find the resource
         if (null == returnValue) {
           returnValue = cl.getResourceAsStream("/" + resource);
         }
 
+        // 成功获得到，返回
         if (null != returnValue) {
           return returnValue;
         }
@@ -137,21 +147,26 @@ public class ClassLoaderWrapper {
    */
   URL getResourceAsURL(String resource, ClassLoader[] classLoader) {
 
+    //入参URL
     URL url;
 
+    //遍历ClassLoader数组
     for (ClassLoader cl : classLoader) {
 
       if (null != cl) {
 
+        //获得URL 不带/
         // look for the resource as passed in...
         url = cl.getResource(resource);
 
+        //获得URL 带/
         // ...but some class loaders want this leading "/", so we'll add it
         // and try again if we didn't find the resource
         if (null == url) {
           url = cl.getResource("/" + resource);
         }
 
+        // 成功获得到，返回
         // "It's always in the last place I look for it!"
         // ... because only an idiot would keep looking for it after finding it, so stop looking already.
         if (null != url) {
@@ -177,14 +192,17 @@ public class ClassLoaderWrapper {
    */
   Class<?> classForName(String name, ClassLoader[] classLoader) throws ClassNotFoundException {
 
+    // 遍历 ClassLoader 数组
     for (ClassLoader cl : classLoader) {
 
       if (null != cl) {
 
         try {
 
+          // 获得类
           Class<?> c = Class.forName(name, true, cl);
 
+          // 成功获得到，返回
           if (null != c) {
             return c;
           }
@@ -197,16 +215,22 @@ public class ClassLoaderWrapper {
 
     }
 
+    // 获得不到，抛出 ClassNotFoundException 异常
     throw new ClassNotFoundException("Cannot find class: " + name);
 
   }
 
   ClassLoader[] getClassLoaders(ClassLoader classLoader) {
     return new ClassLoader[]{
+        //入参 类加载器
         classLoader,
+        //默认类加载器
         defaultClassLoader,
+        //当前线程加载器
         Thread.currentThread().getContextClassLoader(),
+        //当前类加载器
         getClass().getClassLoader(),
+        //系统类加载器
         systemClassLoader};
   }
 
