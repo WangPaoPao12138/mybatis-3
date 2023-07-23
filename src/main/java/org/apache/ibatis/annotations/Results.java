@@ -22,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 对应 XML 标签为 <resultMap />
  * @author Clinton Begin
  */
 @Documented
@@ -32,5 +33,8 @@ public @interface Results {
    * The name of the result map.
    */
   String id() default "";
+  /**
+   * @return {@link Result} 数组
+   */
   Result[] value() default {};
 }

@@ -44,23 +44,54 @@ public @interface Options {
     FALSE
   }
 
+  /**
+   * 是否使用缓存
+   * @return
+   */
   boolean useCache() default true;
 
+  /**
+   * @return 刷新缓存的策略
+   */
   FlushCachePolicy flushCache() default FlushCachePolicy.DEFAULT;
 
+  /**
+   * @return 结果类型
+   */
   ResultSetType resultSetType() default ResultSetType.DEFAULT;
 
+  /**
+   * @return 语句类型
+   */
   StatementType statementType() default StatementType.PREPARED;
 
+  /**
+   * @return 加载数量
+   */
   int fetchSize() default -1;
 
+  /**
+   * @return 超时时间
+   */
   int timeout() default -1;
 
+  /**
+   * @return 是否生成主键
+   */
   boolean useGeneratedKeys() default false;
 
+  /**
+   * @return 主键在 Java 类中的属性
+   */
   String keyProperty() default "";
 
+  /**
+   * @return 主键在数据库中的字段
+   */
   String keyColumn() default "";
 
+  /**
+   * @return 结果集
+   */
   String resultSets() default "";
 }

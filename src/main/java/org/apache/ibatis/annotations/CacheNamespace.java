@@ -25,6 +25,7 @@ import org.apache.ibatis.cache.decorators.LruCache;
 import org.apache.ibatis.cache.impl.PerpetualCache;
 
 /**
+ * 对应 XML 标签为 <cache />
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -32,21 +33,40 @@ import org.apache.ibatis.cache.impl.PerpetualCache;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface CacheNamespace {
+  /**
+   * @return 负责存储的 Cache 实现类
+   */
   Class<? extends org.apache.ibatis.cache.Cache> implementation() default PerpetualCache.class;
 
+  /**
+   * @return 负责过期的 Cache 实现类
+   */
   Class<? extends org.apache.ibatis.cache.Cache> eviction() default LruCache.class;
 
+  /**
+   * @return 清空缓存的频率。0 代表不清空
+   */
   long flushInterval() default 0;
 
+  /**
+   * @return 缓存容器大小
+   */
   int size() default 1024;
 
+  /**
+   * @return 是否序列化。{@link org.apache.ibatis.cache.decorators.SerializedCache}
+   */
   boolean readWrite() default true;
 
+  /**
+   * @return 是否阻塞。{@link org.apache.ibatis.cache.decorators.BlockingCache}
+   */
   boolean blocking() default false;
 
   /**
    * Property values for a implementation object.
    * @since 3.4.2
+   * {@link Property} 数组
    */
   Property[] properties() default {};
 

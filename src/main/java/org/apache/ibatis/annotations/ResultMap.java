@@ -28,5 +28,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface ResultMap {
+  /**
+   * @return 结果集
+   */
   String[] value();
 }

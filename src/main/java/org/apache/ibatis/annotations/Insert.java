@@ -26,7 +26,10 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法
 public @interface Insert {
+  /**
+   * @return 插入语句
+   */
   String[] value();
 }

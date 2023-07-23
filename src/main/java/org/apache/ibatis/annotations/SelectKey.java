@@ -30,15 +30,33 @@ import org.apache.ibatis.mapping.StatementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface SelectKey {
+  /**
+   * @return 语句
+   */
   String[] statement();
 
+  /**
+   * @return Java 对象的属性
+   */
   String keyProperty();
 
+  /**
+   * @return 数据库的字段
+   */
   String keyColumn() default "";
 
+  /**
+   * @return 在插入语句执行前，还是执行后
+   */
   boolean before();
 
+  /**
+   * @return 返回类型
+   */
   Class<?> resultType();
 
+  /**
+   * @return {@link #statement()} 的类型
+   */
   StatementType statementType() default StatementType.PREPARED;
 }

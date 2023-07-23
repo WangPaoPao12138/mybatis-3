@@ -26,9 +26,15 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法
 public @interface SelectProvider {
+  /**
+   * @return 提供的类
+   */
   Class<?> type();
 
+  /**
+   * @return 提供的方法
+   */
   String method();
 }
