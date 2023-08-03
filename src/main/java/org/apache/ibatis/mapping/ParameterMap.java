@@ -21,12 +21,27 @@ import java.util.List;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 参数集合
+ *
  * @author Clinton Begin
  */
 public class ParameterMap {
 
+  /**
+   * 编号
+   */
   private String id;
+  /**
+   * 类型
+   *
+   * 适用于 paramType="" 标签属性
+   */
   private Class<?> type;
+  /**
+   * ParameterMapping 集合
+   *
+   * 适用于 paramMap="" 标签属性
+   */
   private List<ParameterMapping> parameterMappings;
 
   private ParameterMap() {

@@ -18,11 +18,18 @@ package org.apache.ibatis.mapping;
 import java.sql.ResultSet;
 
 /**
+ * {@link ResultSet} 的枚举值
+ * <p>
+ * 可参看 http://jinguo.iteye.com/blog/365373
+ *
  * @author Clinton Begin
  */
 public enum ResultSetType {
+
   /**
    * behavior with same as unset (driver dependent).
+   * <p>
+   * 默认，即未设置
    *
    * @since 3.5.0
    */

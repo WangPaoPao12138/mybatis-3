@@ -82,7 +82,7 @@ public class MapperRegistry {
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
-        // <4> 解析 Mapper 的注解配置
+        // <4> 解析 Mapper 的注解配置 <====== 😈 看我 😈 =====>
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
         parser.parse();
         // <5> 标记加载完成
