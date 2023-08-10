@@ -30,13 +30,26 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
+ * XML动态sql构建，负责将 SQL 解析成 SqlSource 对象
  * @author Clinton Begin
  */
 public class XMLScriptBuilder extends BaseBuilder {
 
+  /**
+   * 当前 SQL 的 XNode 对象
+   */
   private final XNode context;
+  /**
+   * 是否为动态 SQL
+   */
   private boolean isDynamic;
+  /**
+   * SQL 方法类型
+   */
   private final Class<?> parameterType;
+  /**
+   * NodeNodeHandler 的映射
+   */
   private final Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
 
   public XMLScriptBuilder(Configuration configuration, XNode context) {
@@ -47,6 +60,7 @@ public class XMLScriptBuilder extends BaseBuilder {
     super(configuration);
     this.context = context;
     this.parameterType = parameterType;
+    // 初始化 nodeHandlerMap 属性
     initNodeHandlerMap();
   }
 
@@ -64,7 +78,9 @@ public class XMLScriptBuilder extends BaseBuilder {
   }
 
   public SqlSource parseScriptNode() {
+    // <1> 解析 SQL
     MixedSqlNode rootSqlNode = parseDynamicTags(context);
+    // <2> 创建 SqlSource 对象
     SqlSource sqlSource = null;
     if (isDynamic) {
       sqlSource = new DynamicSqlSource(configuration, rootSqlNode);
@@ -75,33 +91,55 @@ public class XMLScriptBuilder extends BaseBuilder {
   }
 
   protected MixedSqlNode parseDynamicTags(XNode node) {
+    // <1> 创建 SqlNode 数组
     List<SqlNode> contents = new ArrayList<>();
+    // <2> 遍历 SQL 节点的所有子节点
     NodeList children = node.getNode().getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
+      // 当前子节点
       XNode child = node.newXNode(children.item(i));
+      // <2.1> 如果类型是 Node.CDATA_SECTION_NODE 或者 Node.TEXT_NODE 时
       if (child.getNode().getNodeType() == Node.CDATA_SECTION_NODE || child.getNode().getNodeType() == Node.TEXT_NODE) {
+        // <2.1.1> 获得内容
         String data = child.getStringBody("");
+        // <2.1.2> 创建 TextSqlNode 对象
         TextSqlNode textSqlNode = new TextSqlNode(data);
+        // <2.1.2.1> 如果是动态的 TextSqlNode 对象
         if (textSqlNode.isDynamic()) {
+          // 添加到 contents 中
           contents.add(textSqlNode);
+          // 标记为动态 SQL
           isDynamic = true;
+        // <2.1.2.2> 如果是非动态的 StaticTextSqlNode 对象
         } else {
+          //创建 StaticTextSqlNode 添加到 contents 中
           contents.add(new StaticTextSqlNode(data));
         }
+      // <2.2> 如果类型是 Node.ELEMENT_NODE
       } else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
+        // <2.2.1> 根据子节点的标签，获得对应的 NodeHandler 对象
         String nodeName = child.getNode().getNodeName();
         NodeHandler handler = nodeHandlerMap.get(nodeName);
-        if (handler == null) {
+        if (handler == null) { // 获得不到，说明是未知的标签，抛出 BuilderException 异常
           throw new BuilderException("Unknown element <" + nodeName + "> in SQL statement.");
         }
+        // <2.2.2> 执行 NodeHandler 处理
         handler.handleNode(child, contents);
+        // <2.2.3> 标记为动态 SQL
         isDynamic = true;
       }
     }
+    // <3> 创建 MixedSqlNode 对象
     return new MixedSqlNode(contents);
   }
 
   private interface NodeHandler {
+    /**
+     * 处理 Node
+     *
+     * @param nodeToHandle 要处理的 XNode 节点
+     * @param targetContents 目标的 SqlNode 数组。实际上，被处理的 XNode 节点会创建成对应的 SqlNode 对象，添加到 targetContents 中
+     */
     void handleNode(XNode nodeToHandle, List<SqlNode> targetContents);
   }
 
@@ -112,9 +150,12 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析 name、value 属性
       final String name = nodeToHandle.getStringAttribute("name");
       final String expression = nodeToHandle.getStringAttribute("value");
+      // 创建 VarDeclSqlNode 对象
       final VarDeclSqlNode node = new VarDeclSqlNode(name, expression);
+      // 添加到 targetContents 中
       targetContents.add(node);
     }
   }
@@ -126,12 +167,16 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // <1> 解析内部的 SQL 节点，成 MixedSqlNode 对象
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
+      // <2> 获得 prefix、prefixOverrides、"suffix"、suffixOverrides 属性
       String prefix = nodeToHandle.getStringAttribute("prefix");
       String prefixOverrides = nodeToHandle.getStringAttribute("prefixOverrides");
       String suffix = nodeToHandle.getStringAttribute("suffix");
       String suffixOverrides = nodeToHandle.getStringAttribute("suffixOverrides");
+      // <3> 创建 TrimSqlNode 对象
       TrimSqlNode trim = new TrimSqlNode(configuration, mixedSqlNode, prefix, prefixOverrides, suffix, suffixOverrides);
+      // <4> 添加到 targetContents 中
       targetContents.add(trim);
     }
   }
@@ -143,8 +188,11 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析内部的 SQL 节点，成 MixedSqlNode 对象
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
+      // 创建 WhereSqlNode 对象
       WhereSqlNode where = new WhereSqlNode(configuration, mixedSqlNode);
+      // 添加到 targetContents 中
       targetContents.add(where);
     }
   }
@@ -156,8 +204,11 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析内部的 SQL 节点，成 MixedSqlNode 对象
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
+      // 创建 SetSqlNode 对象
       SetSqlNode set = new SetSqlNode(configuration, mixedSqlNode);
+      // 添加到 targetContents 中
       targetContents.add(set);
     }
   }
@@ -169,14 +220,18 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析内部的 SQL 节点，成 MixedSqlNode 对象
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
+      // 获得 collection、item、index、open、close、separator 属性
       String collection = nodeToHandle.getStringAttribute("collection");
       String item = nodeToHandle.getStringAttribute("item");
       String index = nodeToHandle.getStringAttribute("index");
       String open = nodeToHandle.getStringAttribute("open");
       String close = nodeToHandle.getStringAttribute("close");
       String separator = nodeToHandle.getStringAttribute("separator");
+      // 创建 ForEachSqlNode 对象
       ForEachSqlNode forEachSqlNode = new ForEachSqlNode(configuration, mixedSqlNode, collection, index, item, open, close, separator);
+      // 添加到 targetContents 中
       targetContents.add(forEachSqlNode);
     }
   }
@@ -188,9 +243,13 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析内部的 SQL 节点，成 MixedSqlNode 对象
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
+      // 获得 test 属性
       String test = nodeToHandle.getStringAttribute("test");
+      // 创建 IfSqlNode 对象
       IfSqlNode ifSqlNode = new IfSqlNode(mixedSqlNode, test);
+      // 添加到 targetContents 中
       targetContents.add(ifSqlNode);
     }
   }
@@ -216,9 +275,13 @@ public class XMLScriptBuilder extends BaseBuilder {
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
       List<SqlNode> whenSqlNodes = new ArrayList<>();
       List<SqlNode> otherwiseSqlNodes = new ArrayList<>();
+      // 解析 `<when />` 和 `<otherwise />` 的节点们
       handleWhenOtherwiseNodes(nodeToHandle, whenSqlNodes, otherwiseSqlNodes);
+      // 获得 `<otherwise />` 的节点
       SqlNode defaultSqlNode = getDefaultSqlNode(otherwiseSqlNodes);
+      // 创建 ChooseSqlNode 对象
       ChooseSqlNode chooseSqlNode = new ChooseSqlNode(whenSqlNodes, defaultSqlNode);
+      // 添加到 targetContents 中
       targetContents.add(chooseSqlNode);
     }
 
@@ -227,14 +290,15 @@ public class XMLScriptBuilder extends BaseBuilder {
       for (XNode child : children) {
         String nodeName = child.getNode().getNodeName();
         NodeHandler handler = nodeHandlerMap.get(nodeName);
-        if (handler instanceof IfHandler) {
+        if (handler instanceof IfHandler) { // 处理 `<when />` 标签的情况
           handler.handleNode(child, ifSqlNodes);
-        } else if (handler instanceof OtherwiseHandler) {
+        } else if (handler instanceof OtherwiseHandler) { // 处理 `<otherwise />` 标签的情况
           handler.handleNode(child, defaultSqlNodes);
         }
       }
     }
 
+    // 至多允许有一个 SqlNode 节点
     private SqlNode getDefaultSqlNode(List<SqlNode> defaultSqlNodes) {
       SqlNode defaultSqlNode = null;
       if (defaultSqlNodes.size() == 1) {

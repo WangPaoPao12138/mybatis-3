@@ -31,10 +31,14 @@ public class IfSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // <1> 判断是否符合条件
     if (evaluator.evaluateBoolean(test, context.getBindings())) {
+      // <2> 符合，执行 contents 的应用
       contents.apply(context);
+      // 返回成功
       return true;
     }
+    // <3> 不符合，返回失败
     return false;
   }
 
