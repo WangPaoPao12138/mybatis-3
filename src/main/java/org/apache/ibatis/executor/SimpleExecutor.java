@@ -45,13 +45,14 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
-      // 创建 StatementHandler 对象
+      // <x> 创建 StatementHandler 对象
       StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
       // 初始化 StatementHandler 对象
       stmt = prepareStatement(handler, ms.getStatementLog());
-      // <3> 执行 StatementHandler ，进行写操作
+      // 执行 StatementHandler ，进行写操作
       return handler.update(stmt);
     } finally {
+      // 关闭 StatementHandler 对象
       closeStatement(stmt);
     }
   }
