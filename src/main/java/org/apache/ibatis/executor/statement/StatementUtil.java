@@ -21,6 +21,8 @@ import java.sql.Statement;
 /**
  * Utility for {@link java.sql.Statement}.
  *
+ * {@link Statement} 工具类
+ *
  * @since 3.4.0
  * @author Kazuki Shimizu
  */
@@ -31,6 +33,8 @@ public class StatementUtil {
   }
 
   /**
+   * 设置事务超时时间
+   *
    * Apply a transaction timeout.
    * <p>
    * Update a query timeout to apply a transaction timeout.
@@ -44,12 +48,14 @@ public class StatementUtil {
     if (transactionTimeout == null){
       return;
     }
+    // 获得 timeToLiveOfQuery
     Integer timeToLiveOfQuery = null;
-    if (queryTimeout == null || queryTimeout == 0) {
+    if (queryTimeout == null || queryTimeout == 0) { // 取 transactionTimeout
       timeToLiveOfQuery = transactionTimeout;
-    } else if (transactionTimeout < queryTimeout) {
+    } else if (transactionTimeout < queryTimeout) { // 取小的
       timeToLiveOfQuery = transactionTimeout;
     }
+    // 设置超时时间
     if (timeToLiveOfQuery != null) {
       statement.setQueryTimeout(timeToLiveOfQuery);
     }

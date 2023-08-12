@@ -25,10 +25,26 @@ import org.apache.ibatis.mapping.MappedStatement;
  */
 public class BatchResult {
 
+  /**
+   * MappedStatement 对象
+   */
   private final MappedStatement mappedStatement;
+  /**
+   * SQL
+   */
   private final String sql;
+  /**
+   * 参数对象集合
+   *
+   * 每一个元素，对应一次操作的参数
+   */
   private final List<Object> parameterObjects;
 
+  /**
+   * 更新数量集合
+   *
+   * 每一个元素，对应一次操作的更新数量
+   */
   private int[] updateCounts;
 
   public BatchResult(MappedStatement mappedStatement, String sql) {
