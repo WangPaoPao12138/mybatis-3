@@ -33,7 +33,16 @@ import org.apache.ibatis.session.RowBounds;
 public class SelectKeyGenerator implements KeyGenerator {
 
   public static final String SELECT_KEY_SUFFIX = "!selectKey";
+  /**
+   * 是否在 before 阶段执行
+   *
+   * true ：before
+   * after ：after
+   */
   private final boolean executeBefore;
+  /**
+   * MappedStatement 对象
+   */
   private final MappedStatement keyStatement;
 
   public SelectKeyGenerator(MappedStatement keyStatement, boolean executeBefore) {
@@ -57,6 +66,7 @@ public class SelectKeyGenerator implements KeyGenerator {
 
   private void processGeneratedKeys(Executor executor, MappedStatement ms, Object parameter) {
     try {
+      // <1> 有查询主键的 SQL 语句，即 keyStatement 对象非空
       if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
         String[] keyProperties = keyStatement.getKeyProperties();
         final Configuration configuration = ms.getConfiguration();
@@ -64,15 +74,22 @@ public class SelectKeyGenerator implements KeyGenerator {
         if (keyProperties != null) {
           // Do not close keyExecutor.
           // The transaction will be closed by parent executor.
+          // <2> 创建执行器，类型为 SimpleExecutor
           Executor keyExecutor = configuration.newExecutor(executor.getTransaction(), ExecutorType.SIMPLE);
+          // <3> 执行查询主键的操作
           List<Object> values = keyExecutor.query(keyStatement, parameter, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
+          // <4.1> 查不到结果，抛出 ExecutorException 异常
           if (values.size() == 0) {
             throw new ExecutorException("SelectKey returned no data.");
+            // <4.2> 查询的结果过多，抛出 ExecutorException 异常
           } else if (values.size() > 1) {
             throw new ExecutorException("SelectKey returned more than one value.");
           } else {
+            // <4.3> 创建 MetaObject 对象，访问查询主键的结果
             MetaObject metaResult = configuration.newMetaObject(values.get(0));
+            // <4.3.1> 单个主键
             if (keyProperties.length == 1) {
+              // 设置属性到 metaParam 中，相当于设置到 parameter 中
               if (metaResult.hasGetter(keyProperties[0])) {
                 setValue(metaParam, keyProperties[0], metaResult.getValue(keyProperties[0]));
               } else {
@@ -80,7 +97,9 @@ public class SelectKeyGenerator implements KeyGenerator {
                 // so try that
                 setValue(metaParam, keyProperties[0], values.get(0));
               }
+            // <4.3.2> 多个主键
             } else {
+              // 遍历，进行赋值
               handleMultipleProperties(keyProperties, metaParam, metaResult);
             }
           }
@@ -97,6 +116,7 @@ public class SelectKeyGenerator implements KeyGenerator {
       MetaObject metaParam, MetaObject metaResult) {
     String[] keyColumns = keyStatement.getKeyColumns();
 
+    // 遍历，进行赋值
     if (keyColumns == null || keyColumns.length == 0) {
       // no key columns specified, just use the property names
       for (String keyProperty : keyProperties) {
