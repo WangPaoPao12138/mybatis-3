@@ -41,12 +41,29 @@ public class DefaultCursor<T> implements Cursor<T> {
   private final ResultMap resultMap;
   private final ResultSetWrapper rsw;
   private final RowBounds rowBounds;
+  /**
+   * ObjectWrapperResultHandler 对象
+   */
   private final ObjectWrapperResultHandler<T> objectWrapperResultHandler = new ObjectWrapperResultHandler<>();
 
+  /**
+   * CursorIterator 对象，游标迭代器。
+   */
   private final CursorIterator cursorIterator = new CursorIterator();
+  /**
+   * 是否开始迭代
+   *
+   * {@link #iterator()}
+   */
   private boolean iteratorRetrieved;
 
+  /**
+   * 游标状态
+   */
   private CursorStatus status = CursorStatus.CREATED;
+  /**
+   * 已完成映射的行数
+   */
   private int indexWithRowBound = -1;
 
   private enum CursorStatus {
@@ -61,10 +78,14 @@ public class DefaultCursor<T> implements Cursor<T> {
     OPEN,
     /**
      * A closed cursor, not fully consumed
+     *
+     * 已关闭，并未完全消费
      */
     CLOSED,
     /**
      * A fully consumed cursor, a consumed cursor is always closed
+     *
+     * 已关闭，并且完全消费
      */
     CONSUMED
   }
@@ -93,12 +114,14 @@ public class DefaultCursor<T> implements Cursor<T> {
 
   @Override
   public Iterator<T> iterator() {
+    // 如果已经获取或者关闭，则抛出 IllegalStateException 异常
     if (iteratorRetrieved) {
       throw new IllegalStateException("Cannot open more than one iterator on a Cursor");
     }
     if (isClosed()) {
       throw new IllegalStateException("A Cursor is already closed.");
     }
+    // 标记已经获取
     iteratorRetrieved = true;
     return cursorIterator;
   }
@@ -109,6 +132,7 @@ public class DefaultCursor<T> implements Cursor<T> {
       return;
     }
 
+    // 关闭 ResultSet
     ResultSet rs = rsw.getResultSet();
     try {
       if (rs != null) {
@@ -117,25 +141,32 @@ public class DefaultCursor<T> implements Cursor<T> {
     } catch (SQLException e) {
       // ignore
     } finally {
+      // 设置状态为 CursorStatus.CLOSED
       status = CursorStatus.CLOSED;
     }
   }
 
   protected T fetchNextUsingRowBound() {
+    // <1> 遍历下一条记录
     T result = fetchNextObjectFromDatabase();
+    // 循环跳过 rowBounds 的索引
     while (result != null && indexWithRowBound < rowBounds.getOffset()) {
       result = fetchNextObjectFromDatabase();
     }
+    // 返回记录
     return result;
   }
 
   protected T fetchNextObjectFromDatabase() {
+    // <1> 如果已经关闭，返回 null
     if (isClosed()) {
       return null;
     }
 
     try {
+      // <2> 设置状态为 CursorStatus.OPEN
       status = CursorStatus.OPEN;
+      // <3> 遍历下一条记录
       if (!rsw.getResultSet().isClosed()) {
         resultSetHandler.handleRowValues(rsw, resultMap, objectWrapperResultHandler, RowBounds.DEFAULT, null);
       }
@@ -143,17 +174,22 @@ public class DefaultCursor<T> implements Cursor<T> {
       throw new RuntimeException(e);
     }
 
+    // <4> 复制给 next
     T next = objectWrapperResultHandler.result;
+    // <5> 增加 indexWithRowBound
     if (next != null) {
       indexWithRowBound++;
     }
     // No more object or limit reached
+    // <6> 没有更多记录，或者到达 rowBounds 的限制索引位置，则关闭游标，并设置状态为 CursorStatus.CONSUMED
     if (next == null || getReadItemsCount() == rowBounds.getOffset() + rowBounds.getLimit()) {
       close();
       status = CursorStatus.CONSUMED;
     }
+    // <7> 置空 objectWrapperResultHandler.result 属性
     objectWrapperResultHandler.result = null;
 
+    // <8> 返回下一条结果
     return next;
   }
 
@@ -167,11 +203,16 @@ public class DefaultCursor<T> implements Cursor<T> {
 
   private static class ObjectWrapperResultHandler<T> implements ResultHandler<T> {
 
+    /**
+     * 结果对象
+     */
     private T result;
 
     @Override
     public void handleResult(ResultContext<? extends T> context) {
+      // <1> 设置结果对象
       this.result = context.getResultObject();
+      // <2> 暂停
       context.stop();
     }
   }
@@ -180,36 +221,48 @@ public class DefaultCursor<T> implements Cursor<T> {
 
     /**
      * Holder for the next object to be returned
+     *
+     * 结果对象，提供给 {@link #next()} 返回
      */
     T object;
 
     /**
      * Index of objects returned using next(), and as such, visible to users.
+     * 索引位置
      */
     int iteratorIndex = -1;
 
     @Override
     public boolean hasNext() {
+      // <1> 如果 object 为空，则遍历下一条记录
       if (object == null) {
         object = fetchNextUsingRowBound();
       }
+      // <2> 判断 object 是否非空
       return object != null;
     }
 
     @Override
     public T next() {
-      // Fill next with object fetched from hasNext()
+      // <3> Fill next with object fetched from hasNext()
       T next = object;
 
+      // <4> 如果 next 为空，则遍历下一条记录
       if (next == null) {
         next = fetchNextUsingRowBound();
       }
 
+      // <5> 如果 next 非空，说明有记录，则进行返回
       if (next != null) {
+        // <5.1> 置空 object 对象
         object = null;
+        // <5.2> 增加 iteratorIndex
         iteratorIndex++;
+        // <5.3> 返回 next
         return next;
       }
+
+      // <6> 如果 next 为空，说明没有记录，抛出 NoSuchElementException 异常
       throw new NoSuchElementException();
     }
 
