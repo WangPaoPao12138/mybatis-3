@@ -735,6 +735,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       for (ResultMapping propertyMapping : propertyMappings) {
         // issue gcode #109 && issue #149
         if (propertyMapping.getNestedQueryId() != null && propertyMapping.isLazy()) {
+          //<x>
           resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
           break;
         }
@@ -913,7 +914,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       // <3.2> 获得 CacheKey 对象
       final CacheKey key = executor.createCacheKey(nestedQuery, nestedQueryParameterObject, RowBounds.DEFAULT, nestedBoundSql);
       final Class<?> targetType = constructorMapping.getJavaType();
-      // <3.3> 创建 ResultLoader 对象
+      // <3.3>  <x> 创建 ResultLoader 对象
       final ResultLoader resultLoader = new ResultLoader(configuration, executor, nestedQuery, nestedQueryParameterObject, targetType, key, nestedBoundSql);
       // <3.3> 加载结果
       value = resultLoader.loadResult();
@@ -940,7 +941,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       // 获得 CacheKey 对象
       final CacheKey key = executor.createCacheKey(nestedQuery, nestedQueryParameterObject, RowBounds.DEFAULT, nestedBoundSql);
       final Class<?> targetType = propertyMapping.getJavaType();
-      // <1> 检查缓存中已存在
+      // <1> <y>检查缓存中已存在
       if (executor.isCached(nestedQuery, key)) { //  有缓存
         // <2.1> 创建 DeferredLoad 对象，并通过该 DeferredLoad 对象从缓存中加载结采对象
         executor.deferLoad(nestedQuery, metaResultObject, property, key, targetType);
@@ -950,7 +951,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       } else { // 无缓存
         // <3.1> 创建 ResultLoader 对象
         final ResultLoader resultLoader = new ResultLoader(configuration, executor, nestedQuery, nestedQueryParameterObject, targetType, key, nestedBoundSql);
-        // <3.2> 如果要求延迟加载，则延迟加载
+        // <3.2> <x> 如果要求延迟加载，则延迟加载
         if (propertyMapping.isLazy()) {
           // 如果该属性配置了延迟加载，则将其添加到 `ResultLoader.loaderMap` 中，等待真正使用时再执行嵌套查询并得到结果对象。
           lazyLoader.addLoader(property, metaResultObject, resultLoader);

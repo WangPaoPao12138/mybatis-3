@@ -42,15 +42,33 @@ public class ResultLoader {
   protected final Configuration configuration;
   protected final Executor executor;
   protected final MappedStatement mappedStatement;
+  /**
+   * 查询的参数对象
+   */
   protected final Object parameterObject;
+  /**
+   * 结果的类型
+   */
   protected final Class<?> targetType;
   protected final ObjectFactory objectFactory;
   protected final CacheKey cacheKey;
   protected final BoundSql boundSql;
+  /**
+   * ResultExtractor 对象
+   */
   protected final ResultExtractor resultExtractor;
+  /**
+   * 创建 ResultLoader 对象时，所在的线程
+   */
   protected final long creatorThreadId;
 
+  /**
+   * 是否已经加载
+   */
   protected boolean loaded;
+  /**
+   * 查询的结果对象
+   */
   protected Object resultObject;
 
   public ResultLoader(Configuration config, Executor executor, MappedStatement mappedStatement, Object parameterObject, Class<?> targetType, CacheKey cacheKey, BoundSql boundSql) {
@@ -62,24 +80,32 @@ public class ResultLoader {
     this.objectFactory = configuration.getObjectFactory();
     this.cacheKey = cacheKey;
     this.boundSql = boundSql;
+    // 初始化 resultExtractor
     this.resultExtractor = new ResultExtractor(configuration, objectFactory);
+    // 初始化 creatorThreadId
     this.creatorThreadId = Thread.currentThread().getId();
   }
 
   public Object loadResult() throws SQLException {
+    // <1> 查询结果
     List<Object> list = selectList();
+    // <2> 提取结果
     resultObject = resultExtractor.extractObjectFromList(list, targetType);
+    // <3> 返回结果
     return resultObject;
   }
 
   private <E> List<E> selectList() throws SQLException {
+    // <1> 获得 Executor 对象
     Executor localExecutor = executor;
     if (Thread.currentThread().getId() != this.creatorThreadId || localExecutor.isClosed()) {
       localExecutor = newExecutor();
     }
+    // <2> 执行查询
     try {
       return localExecutor.<E> query(mappedStatement, parameterObject, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER, cacheKey, boundSql);
     } finally {
+      // <3> 关闭 Executor 对象
       if (localExecutor != executor) {
         localExecutor.close(false);
       }
@@ -87,16 +113,20 @@ public class ResultLoader {
   }
 
   private Executor newExecutor() {
+    // 校验 environment
     final Environment environment = configuration.getEnvironment();
     if (environment == null) {
       throw new ExecutorException("ResultLoader could not load lazily.  Environment was not configured.");
     }
+    // 校验 ds
     final DataSource ds = environment.getDataSource();
     if (ds == null) {
       throw new ExecutorException("ResultLoader could not load lazily.  DataSource was not configured.");
     }
+    // 创建 Transaction 对象
     final TransactionFactory transactionFactory = environment.getTransactionFactory();
     final Transaction tx = transactionFactory.newTransaction(ds, null, false);
+    // 创建 Executor 对象
     return configuration.newExecutor(tx, ExecutorType.SIMPLE);
   }
 
