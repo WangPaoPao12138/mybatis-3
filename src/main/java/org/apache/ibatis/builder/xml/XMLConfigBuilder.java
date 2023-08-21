@@ -223,6 +223,12 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析 <plugins /> 标签，添加到 {@link Configuration#interceptorChain} 中
+   *
+   * @param parent 节点
+   * @throws Exception 发生异常时
+   */
   private void pluginElement(XNode parent) throws Exception {
     if (parent != null) {
       // 遍历 <plugin/> 标签

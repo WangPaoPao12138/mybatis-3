@@ -19,12 +19,23 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
+ * 方法调用信息
+ *
  * @author Clinton Begin
  */
 public class Invocation {
 
+  /**
+   * 目标对象
+   */
   private final Object target;
+  /**
+   * 方法对象
+   */
   private final Method method;
+  /**
+   * 方法参数数组
+   */
   private final Object[] args;
 
   public Invocation(Object target, Method method, Object[] args) {
@@ -45,6 +56,11 @@ public class Invocation {
     return args;
   }
 
+  /**
+   * 调用方法
+   *
+   * @return 调用结果
+   */
   public Object proceed() throws InvocationTargetException, IllegalAccessException {
     return method.invoke(target, args);
   }

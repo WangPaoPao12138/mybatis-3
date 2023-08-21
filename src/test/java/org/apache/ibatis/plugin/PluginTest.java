@@ -40,19 +40,19 @@ public class PluginTest {
   }
 
   @Intercepts({
-      @Signature(type = Map.class, method = "get", args = {Object.class})})
+          @Signature(type = Map.class, method = "get", args = {Object.class})}) // <1> 定义了需要拦截的方法为 Map 类型、方法为 "get" 方法，方法参数为 Object.class
   public static class AlwaysMapPlugin implements Interceptor {
-    @Override
+    @Override // <4> 拦截方法 此处只会返回 Always
     public Object intercept(Invocation invocation) throws Throwable {
       return "Always";
     }
 
-    @Override
+    @Override // <2> 调用 Plugin#wrap(Object target, Interceptor interceptor) 方法，执行代理对象的创建。
     public Object plugin(Object target) {
       return Plugin.wrap(target, this);
     }
 
-    @Override
+    @Override // <3> 暂未做任何实现。此处可以实现，若 AlwaysMapPlugin 有属性，可以从 properties 获取一些需要的属性值。
     public void setProperties(Properties properties) {
     }
   }
