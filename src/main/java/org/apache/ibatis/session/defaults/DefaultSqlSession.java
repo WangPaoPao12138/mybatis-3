@@ -51,8 +51,17 @@ public class DefaultSqlSession implements SqlSession {
   private final Configuration configuration;
   private final Executor executor;
 
+  /**
+   * 是否自动提交事务
+   */
   private final boolean autoCommit;
+  /**
+   * 是否发生数据变更 执行过写操作
+   */
   private boolean dirty;
+  /**
+   * Cursor 数组
+   */
   private List<Cursor<?>> cursorList;
 
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
@@ -96,14 +105,21 @@ public class DefaultSqlSession implements SqlSession {
 
   @Override
   public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+    // <1> 执行查询
     final List<? extends V> list = selectList(statement, parameter, rowBounds);
+    // <2> 创建 DefaultMapResultHandler 对象
     final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<>(mapKey,
             configuration.getObjectFactory(), configuration.getObjectWrapperFactory(), configuration.getReflectorFactory());
+    // <3> 创建 DefaultResultContext 对象
     final DefaultResultContext<V> context = new DefaultResultContext<>();
+    // <4> 遍历查询结果
     for (V o : list) {
+      // 设置 DefaultResultContext 中
       context.nextResultObject(o);
+      // 使用 DefaultMapResultHandler 处理结果的当前元素
       mapResultHandler.handleResult(context);
     }
+    // <5> 返回结果
     return mapResultHandler.getMappedResults();
   }
 
@@ -120,8 +136,11 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds) {
     try {
+      // <1> 获得 MappedStatement 对象
       MappedStatement ms = configuration.getMappedStatement(statement);
+      // <2> 执行查询
       Cursor<T> cursor = executor.queryCursor(ms, wrapCollection(parameter), rowBounds);
+      // <3> 添加 cursor 到 cursorList 中
       registerCursor(cursor);
       return cursor;
     } catch (Exception e) {
@@ -144,7 +163,9 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
+      // <1> 获得 MappedStatement 对象
       MappedStatement ms = configuration.getMappedStatement(statement);
+      // <2> 执行查询
       return executor.query(ms, wrapCollection(parameter), rowBounds, Executor.NO_RESULT_HANDLER);
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
@@ -166,7 +187,9 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler) {
     try {
+      // 获得 MappedStatement 对象
       MappedStatement ms = configuration.getMappedStatement(statement);
+      // 执行查询
       executor.query(ms, wrapCollection(parameter), rowBounds, handler);
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
@@ -193,8 +216,11 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public int update(String statement, Object parameter) {
     try {
+      // <1> 标记 dirty ，表示执行过写操作
       dirty = true;
+      // <2> 获得 MappedStatement 对象
       MappedStatement ms = configuration.getMappedStatement(statement);
+      // <3> 执行更新操作
       return executor.update(ms, wrapCollection(parameter));
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);
@@ -221,7 +247,9 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public void commit(boolean force) {
     try {
+      // 提交事务
       executor.commit(isCommitOrRollbackRequired(force));
+      // 标记 dirty 为 false
       dirty = false;
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error committing transaction.  Cause: " + e, e);
@@ -238,7 +266,9 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public void rollback(boolean force) {
     try {
+      // 回滚事务
       executor.rollback(isCommitOrRollbackRequired(force));
+      // 标记 dirty 为 false
       dirty = false;
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error rolling back transaction.  Cause: " + e, e);
@@ -261,8 +291,11 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public void close() {
     try {
+      // <1> 关闭执行器
       executor.close(isCommitOrRollbackRequired(false));
+      // <2> 关闭所有游标
       closeCursors();
+      // <3> 重置 dirty 为 false
       dirty = false;
     } finally {
       ErrorContext.instance().reset();
@@ -314,18 +347,29 @@ public class DefaultSqlSession implements SqlSession {
   }
 
   private boolean isCommitOrRollbackRequired(boolean force) {
+//    有两种情况需要触发
+//    1）未开启自动提交，并且数据发生写操作
+//    2）强制提交
     return (!autoCommit && dirty) || force;
   }
 
+  /**
+   * 参数 object 是 Collection、Array、List 参数类型的情况下，包装成 Map 返回
+   * @param object
+   * @return
+   */
   private Object wrapCollection(final Object object) {
     if (object instanceof Collection) {
+      // 如果是集合，则添加到 collection 中
       StrictMap<Object> map = new StrictMap<>();
       map.put("collection", object);
+      // 如果是 List ，则添加到 list 中
       if (object instanceof List) {
         map.put("list", object);
       }
       return map;
     } else if (object != null && object.getClass().isArray()) {
+      // 如果是 Array ，则添加到 array 中
       StrictMap<Object> map = new StrictMap<>();
       map.put("array", object);
       return map;

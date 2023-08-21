@@ -24,6 +24,10 @@ import java.sql.Connection;
  */
 public interface SqlSessionFactory {
 
+  /**
+   * openSession 类方法 多个重载方法
+   * @return
+   */
   SqlSession openSession();
 
   SqlSession openSession(boolean autoCommit);
@@ -35,6 +39,10 @@ public interface SqlSessionFactory {
   SqlSession openSession(ExecutorType execType, TransactionIsolationLevel level);
   SqlSession openSession(ExecutorType execType, Connection connection);
 
+  /**
+   * getConfiguration 方法
+   * @return
+   */
   Configuration getConfiguration();
 
 }
