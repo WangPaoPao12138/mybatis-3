@@ -33,6 +33,16 @@ public interface CountryMapper {
   @Insert({ "insert into country (countryname,countrycode) values (#{country.countryname},#{country.countrycode})" })
   int insertNamedBean(@Param("country") Country country);
 
+  @Options(useGeneratedKeys = true, keyProperty = "country.id")
+  @Insert({"insert into country (countryname, countrycode) values (#{country.countryname}, #{country.countrycode})"})
+  int insertMultiParams_keyPropertyWithWrongParamName2(@Param("country") Country country,
+                                                       @Param("someId") Integer someId);
+
+  @Options(useGeneratedKeys = true, keyProperty = "id")
+  @Insert({"insert into country (countryname, countrycode) values (#{country.countryname}, #{country.countrycode})"})
+  int insertMultiParams_keyPropertyWithWrongParamName3(@Param("country") Country country);
+
+
   int insertList(List<Country> countries);
 
   int insertNamedList(@Param("countries") List<Country> countries);

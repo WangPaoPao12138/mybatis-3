@@ -76,8 +76,38 @@ public class Jdbc3KeyGeneratorTest {
       try {
         CountryMapper mapper = sqlSession.getMapper(CountryMapper.class);
         Country country = new Country("China", "CN");
-        mapper.insertNamedBean(country);
+        int count = mapper.insertNamedBean(country);
+        System.out.println("country count :" + count + ", id:" + country.getId());
         assertNotNull(country.getId());
+      } finally {
+        sqlSession.rollback();
+      }
+    }
+  }
+
+  @Test
+  public void shouldFailIfKeyPropertyIsInvalid_WrongParamName2() throws Exception { // add by 芋艿
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+      try {
+        CountryMapper mapper = sqlSession.getMapper(CountryMapper.class);
+        Country country = new Country("China", "CN");
+        int count1 = mapper.insertMultiParams_keyPropertyWithWrongParamName2(country, 1);
+        System.out.println("country count :" + count1 + ", id:" + country.getId());
+
+//        int count2 = mapper.insertMultiParams_keyPropertyWithWrongParamName2(country, 1);
+//        System.out.println("country count :" + count2 + ", id:" + country.getId());
+
+//        int count3 = mapper.insertMultiParams_keyPropertyWithWrongParamName2(country, 1);
+//        System.out.println("country count :" + count3 + ", id:" + country.getId());
+
+        int count4 = mapper.insertMultiParams_keyPropertyWithWrongParamName3(country);
+        System.out.println("country count :" + count4 + ", id:" + country.getId());
+//        mapper.insertMultiParams_keyPropertyWithWrongParamName3(country);
+//                when(mapper).insertMultiParams_keyPropertyWithWrongParamName(country, Integer.valueOf(1));
+//                then(caughtException()).isInstanceOf(PersistenceException.class).hasMessageContaining(
+//                        "Could not find parameter 'bogus'. "
+//                                + "Note that when there are multiple parameters, 'keyProperty' must include the parameter name (e.g. 'param.id'). "
+//                                + "Specified key properties are [bogus.id] and available parameters are [");
       } finally {
         sqlSession.rollback();
       }
